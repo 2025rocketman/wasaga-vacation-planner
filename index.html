@@ -177,8 +177,41 @@
           <p class="text-driftwood mt-2">Edit any planning cell directly. Outfit cells now open a visual four-person photo board for that day.</p>
         </div>
 
-        <div class="overflow-x-auto rounded-[1.75rem] bg-white/90 shadow border border-white">
-          <table class="min-w-[1800px] w-full text-sm border-collapse" id="plannerTable"></table>
+        <div class="glass rounded-[1.75rem] p-4 shadow">
+          <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="scan" class="h-4 w-4 text-ocean"></i>
+                <span class="text-sm font-semibold text-slate-700">Table size</span>
+                <span id="planScaleLabel" class="rounded-full bg-seafoam px-2.5 py-1 text-xs font-semibold text-ocean">100%</span>
+              </div>
+              <p class="mt-1 text-xs text-driftwood">Shrink the table for a multi-day or weekly overview. Your setting is saved on this device.</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-semibold text-driftwood">40%</span>
+              <input
+                id="planScaleSlider"
+                type="range"
+                min="40"
+                max="100"
+                step="5"
+                value="100"
+                class="w-full min-w-[170px] accent-[#0F4C81] sm:w-72"
+                aria-label="Plan table scale"
+              >
+              <span class="text-xs font-semibold text-driftwood">100%</span>
+              <button id="resetPlanScale" class="btn shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-ocean shadow-sm">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div id="plannerViewport" class="overflow-x-auto rounded-[1.4rem] bg-white/90 border border-white">
+            <div id="plannerScaleWrap" style="zoom:1;">
+              <table class="min-w-[1800px] w-full text-sm border-collapse" id="plannerTable"></table>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -220,22 +253,22 @@
 
 <script>
 const DATES=[
-["Aug 12","24° / 18°","Risk of T-Storm","60% / 40%","~1 / ~1","6:19 AM","8:29 PM"],
-["Aug 13","23° / 16°","Chance of Shower","40% / 20%","<1 / 0","6:20 AM","8:28 PM"],
-["Aug 14","23° / 15°","Mainly Sunny","10% / 10%","0 / 0","6:21 AM","8:26 PM"],
-["Aug 15","24° / 17°","Sunny / Showers PM","40% / 60%","<1 / 5–10","6:22 AM","8:25 PM"],
-["Aug 16","23° / 17°","Cloudy w/ Showers","60% / 40%","~1 / <1","6:23 AM","8:23 PM"],
-["Aug 17","23° / 18°","Mainly Sunny","20% / 10%","0 / 0","6:24 AM","8:22 PM"],
-["Aug 18","24° / 18°","Sunny","10% / 10%","0 / 0","6:25 AM","8:20 PM"],
-["Aug 19","25° / 19°","Sunny → Shower","40% / 60%","<1 / ~1","6:26 AM","8:19 PM"],
-["Aug 20","25° / 20°","A Few Showers","60% / 60%","~5 / 5–10","6:27 AM","8:17 PM"],
-["Aug 21","24° / 18°","Chance of Shower","60% / 40%","~1 / <1","6:28 AM","8:15 PM"],
-["Aug 22","24° / 19°","Sunny","10% / 10%","0 / 0","6:29 AM","8:14 PM"],
-["Aug 23","24° / 18°","Mainly Sunny","20% / 20%","0 / 0","6:30 AM","8:12 PM"],
-["Aug 24","24° / 18°","Sunny","10% / 10%","0 / 0","6:31 AM","8:11 PM"]
+["Wed Aug 12","24° / 18°","Risk of T-Storm","60% / 40%","~1 / ~1","6:19 AM","8:29 PM"],
+["Thu Aug 13","23° / 16°","Chance of Shower","40% / 20%","<1 / 0","6:20 AM","8:28 PM"],
+["Fri Aug 14","23° / 15°","Mainly Sunny","10% / 10%","0 / 0","6:21 AM","8:26 PM"],
+["Sat Aug 15","24° / 17°","Sunny / Showers PM","40% / 60%","<1 / 5–10","6:22 AM","8:25 PM"],
+["Sun Aug 16","23° / 17°","Cloudy w/ Showers","60% / 40%","~1 / <1","6:23 AM","8:23 PM"],
+["Mon Aug 17","23° / 18°","Mainly Sunny","20% / 10%","0 / 0","6:24 AM","8:22 PM"],
+["Tue Aug 18","24° / 18°","Sunny","10% / 10%","0 / 0","6:25 AM","8:20 PM"],
+["Wed Aug 19","25° / 19°","Sunny → Shower","40% / 60%","<1 / ~1","6:26 AM","8:19 PM"],
+["Thu Aug 20","25° / 20°","A Few Showers","60% / 60%","~5 / 5–10","6:27 AM","8:17 PM"],
+["Fri Aug 21","24° / 18°","Chance of Shower","60% / 40%","~1 / <1","6:28 AM","8:15 PM"],
+["Sat Aug 22","24° / 19°","Sunny","10% / 10%","0 / 0","6:29 AM","8:14 PM"],
+["Sun Aug 23","24° / 18°","Mainly Sunny","20% / 20%","0 / 0","6:30 AM","8:12 PM"],
+["Mon Aug 24","24° / 18°","Sunny","10% / 10%","0 / 0","6:31 AM","8:11 PM"]
 ];
 
-const PLAN_ROWS=["Breakfast","Outing 1","Lunch","Outing 2","Dinner","Outing 3","Outfit"];
+const PLAN_ROWS=["Day Name","Breakfast","Outing 1","Lunch","Outing 2","Dinner","Outing 3","Outfit"];
 const WEATHER_ROWS=[["Temperature",1],["Conditions",2],["POP",3],["Rain (mm)",4],["Sunrise",5],["Sunset",6]];
 const OUTFIT_FIELDS=["Hat","Top","Bottom","Shoes","Accessories","Notes"];
 const STORAGE_KEY="wasaga_oasis_v4";
@@ -250,6 +283,7 @@ state.planner=state.planner||{};
 state.outfits=state.outfits||{};
 state.people=state.people||["Person 1","Person 2","Person 3","Person 4"];
 state.outfitPhotos=state.outfitPhotos||{};
+state.planScale=Number(state.planScale)||100;
 
 let activeVisualDay=0;
 
@@ -261,6 +295,38 @@ function esc(value=""){
   return String(value).replace(/[&<>"']/g,c=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
+}
+
+function applyPlanScale(){
+  const slider=document.getElementById("planScaleSlider");
+  const label=document.getElementById("planScaleLabel");
+  const wrap=document.getElementById("plannerScaleWrap");
+  if(!slider || !label || !wrap) return;
+
+  const pct=Math.min(100,Math.max(40,Number(state.planScale)||100));
+  slider.value=pct;
+  label.textContent=pct+"%";
+  wrap.style.zoom=(pct/100);
+}
+
+function bindPlanScaleControls(){
+  const slider=document.getElementById("planScaleSlider");
+  const reset=document.getElementById("resetPlanScale");
+  if(!slider || !reset) return;
+
+  slider.oninput=e=>{
+    state.planScale=Number(e.target.value);
+    applyPlanScale();
+    save();
+  };
+
+  reset.onclick=()=>{
+    state.planScale=100;
+    applyPlanScale();
+    save();
+  };
+
+  applyPlanScale();
 }
 
 function switchView(view, scrollTop=true){
@@ -277,7 +343,7 @@ function switchView(view, scrollTop=true){
     outfits:"Outfits"
   }[view];
 
-  if(view==="plan") renderPlan();
+  if(view==="plan"){ renderPlan(); bindPlanScaleControls(); }
   if(view==="outfits") renderOutfits();
   if(view==="dashboard") renderPeopleNames();
 
@@ -349,6 +415,14 @@ function renderPlan(){
           `;
         }
 
+        if(row==="Day Name"){
+          return `
+            <td class="border-b border-l border-slate-100 p-1 bg-amber-50/40">
+              <input data-plan-key="${key}" value="${esc(value)}" placeholder="e.g. Beach Day" class="w-full min-h-[48px] rounded-xl border border-amber-200/70 bg-white px-3 py-2 text-sm font-semibold text-amber-900 outline-none focus:border-gold focus:ring-4 focus:ring-gold/10">
+            </td>
+          `;
+        }
+
         return `
           <td class="border-b border-l border-slate-100 p-1">
             <textarea data-plan-key="${key}" class="w-full min-h-[62px] resize-none rounded-xl bg-transparent p-2 outline-none focus:bg-seafoam/50">${esc(value)}</textarea>
@@ -389,7 +463,7 @@ function renderPlan(){
 
 function openVisualOutfitModal(dayIndex){
   activeVisualDay=dayIndex;
-  document.getElementById("visualOutfitTitle").textContent=`${DATES[dayIndex][0]}, 2026`;
+  document.getElementById("visualOutfitTitle").textContent=`${DATES[dayIndex][0]}, 2026${state.planner[`Day Name_${dayIndex}`] ? " — " + state.planner[`Day Name_${dayIndex}`] : ""}`;
   renderVisualOutfitGrid();
 
   const modal=document.getElementById("visualOutfitModal");
@@ -516,7 +590,7 @@ function renderOutfits(){
     <article id="outfit-day-${dayIndex}" class="scroll-mt-28 overflow-hidden rounded-[1.75rem] border border-white bg-white/85 shadow">
       <div class="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-seafoam/70 to-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[.15em] text-gold">Day ${dayIndex+1}</p>
+          <p class="text-xs font-semibold uppercase tracking-[.15em] text-gold">DAY ${dayIndex+1}${state.planner[`Day Name_${dayIndex}`] ? ` - ${esc(state.planner[`Day Name_${dayIndex}`])}` : ""}</p>
           <h3 class="mt-1 font-serif text-2xl font-semibold">${d[0]}, 2026</h3>
         </div>
 
@@ -593,7 +667,7 @@ document.querySelectorAll("[data-view]").forEach(btn=>{
 });
 
 function countdown(){
-  const target=new Date("2026-08-12T00:00:00-04:00");
+  const target=new Date("2026-08-12T11:20:00-06:00");
   const ms=Math.max(target-new Date(),0);
 
   document.getElementById("cdD").textContent=Math.floor(ms/86400000);
@@ -604,6 +678,7 @@ function countdown(){
 
 renderPeopleNames();
 renderPlan();
+bindPlanScaleControls();
 renderOutfits();
 countdown();
 setInterval(countdown,1000);
